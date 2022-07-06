@@ -1,6 +1,6 @@
 ---
 - name: Create user1 and set SSH Public key
-  hosts: localhost
+  hosts: some_remote_hosts
   gather_facts: no
   become: yes
 
