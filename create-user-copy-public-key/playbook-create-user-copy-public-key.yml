@@ -1,0 +1,27 @@
+---
+- name: Create user1 and set SSH Public key
+  hosts: localhost
+  gather_facts: no
+  become: yes
+
+  tasks:
+  - name: 'Create user1'
+    ansible.builtin.user:
+      name: user1
+      state: present
+
+  - name: 'Copy public SSH key'
+    ansible.builtin.copy:
+      src: ./id_rsa.pub
+      dest: /home/user1/.ssh/
+      remote_src: no
+      decrypt: yes
+
+
+
+
+
+  
+
+
+

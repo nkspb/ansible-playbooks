@@ -1,0 +1,30 @@
+---
+- name: Install nginx and update index.html
+  hosts: localhost
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: install nginx dependencies
+      ansible.builtin.apt: 
+        pkg:
+        - curl
+        - gnupg2
+        - ca-certificates
+        - lsb-release
+        update_cache: yes
+        state: present
+
+    - name: install nginx
+      ansible.builtin.apt: 
+        name: nginx=1.18.0-6.1
+        state: present
+
+    - name: make sure nginx service runs
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+
+    - name: change index.html
+      ansible.builtin.template:
+        src: index.html.j2
+        dest: /var/www/html/index.html

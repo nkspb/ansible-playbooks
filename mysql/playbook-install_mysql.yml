@@ -1,0 +1,38 @@
+# Playbook to install mysql
+---
+- name: Install mysql repository
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Check if repo package is installed
+      ansible.builtin.command: dpkg-query -W mysql-apt-config
+      register: is_mysql_apt_config_installed
+      failed_when: is_mysql_apt_config_installed.rc > 1 # stop play from failing if package not installed
+      changed_when: is_mysql_apt_config_installed.rc == 1
+
+    - name: Download my-sql-aptconfig package if it's not installed
+      ansible.builtin.get_url:
+        url: https://repo.mysql.com//mysql-apt-config_0.8.22-1_all1.deb
+        dest: /tmp/mysql-apt-config_0.8.22-1_all.deb
+      when: is_mysql_apt_config_installed.rc == 1
+
+    - name: Install mysql-apt-config
+      ansible.builtin.apt:
+        deb: /tmp/mysql-apt-config_0.8.22-1_all.deb
+        state: present
+
+- name: Install mysql-server
+  hosts: localhost
+  become: true
+  tasks: 
+    - name: Install specific version of mysql-server
+      ansible.builtin.apt:
+        name: mysql-server=8.0.29-0ubuntu0.22.04.2
+        state: present
+    - name: Start mysql service
+      ansible.builtin.systemd:
+        name: mysql.service
+        state: started
+
+
+

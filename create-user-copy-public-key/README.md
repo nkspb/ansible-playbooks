@@ -1,0 +1,1 @@
+Ansible playbook to create a remote user and copy a pre-configured encrypted SSH public key.

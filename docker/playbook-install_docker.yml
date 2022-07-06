@@ -1,0 +1,50 @@
+# Playbook to install Docker
+---
+- name: Install Docker dependencies
+  hosts: localhost
+  become: true
+
+  tasks:
+    - name: Install ca-certificates, cure, gnupg, lsb-release, and update repo
+      ansible.builtin.apt:
+        pkg:
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+        update_cache: yes
+
+- name: Install Docker GPG key
+  hosts: localhost
+  become: true
+
+  tasks:
+  - name: Create directory to store key in
+    ansible.builtin.file:
+      name: /etc/apt/keyrings
+      state: directory
+  - name: Download and install the key
+    ansible.builtin.shell: 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg'
+  - name: Set up the repository
+    ansible.builtin.shell: 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null'
+  
+- name: Install Docker
+  hosts: localhost
+  become: true
+  
+  tasks:
+  - name: Install Docker components
+    ansible.builtin.apt:
+      pkg:
+        - docker-ce=5:20.10.17~3-0~ubuntu-jammy
+        - docker-ce-cli=5:20.10.17~3-0~ubuntu-jammy
+        - containerd.io
+        - docker-compose-plugin
+      state: present
+      update_cache: yes
+
+  - name: Start docker service
+    ansible.builtin.systemd:
+      name: docker.service
+      state: started

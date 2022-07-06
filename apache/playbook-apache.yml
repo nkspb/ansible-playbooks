@@ -1,0 +1,51 @@
+---
+- hosts: localhost
+  gather_facts: no
+  become: true
+  tasks:
+  - name: install apache2
+    ansible.builtin.apt:
+      name: apache2
+      state: present
+
+  - name: remove sites-available
+    ansible.builtin.file: 
+      path: /etc/apache2/sites-available
+      state: absent
+
+  - name: create sites-available
+    ansible.builtin.file:
+      path: /etc/apache2/sites-available
+      state: directory
+
+  - name: add new virtual host config
+    ansible.builtin.copy: 
+      src: vhost.conf
+      dest: /etc/apache2/sites-available
+      remote_src: no
+    notify: restart_apache2
+
+  - name: enable new virtual host config
+    ansible.builtin.file:
+      src: /etc/apache2/sites-available/vhost.conf
+      dest: /etc/apache2/sites-enabled/vhost.conf
+      state: link
+
+  - name: create htpasswd
+    ansible.builtin.command: 'htpasswd -b -c /etc/apache2/.htpasswd user1 some_password'
+
+  - name: create content
+    copy:
+      src: index.html
+      dest: /var/www/html/index.html
+      remote_src: no
+
+  handlers:
+  - name: restart apache2
+    listen: restart_apache2
+    ansible.builtin.service:
+      name: apache2
+      state: restarted
+
+
+

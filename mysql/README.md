@@ -1,0 +1,1 @@
+Playbook to install MySQL server on Debian-based systems.
