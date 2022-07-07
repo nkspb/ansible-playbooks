@@ -5,6 +5,5 @@
 **docker** - install Docker on Debian-based systems<br />
 **mysql** - install MySQL server on Debian-based systems<br />
 **nginx** - install nginx on Debian-based systems, and replace default index.html<br />
-**postfix** - install postfix (with *init postfix* tag) and remove it completely (with *drop postfix* tag)
-
-
+**postfix** - install postfix silently<br />
+**vsftpd** - install vsftpd server and configure default settings

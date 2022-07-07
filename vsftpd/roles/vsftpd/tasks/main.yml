@@ -1,0 +1,56 @@
+---
+# tasks file for vsftpd
+- block:
+  - name: Install vsftpd
+    ansible.builtin.yum:
+      name: vsftpd
+      state: present
+      update_cache: yes
+
+  - name: Start the service
+    ansible.builtin.systemd:
+      name: vsftpd
+      state: started
+
+  - name: Disable anonymous login
+    ansible.builtin.lineinfile:
+      path: /etc/vsftpd/vsftpd.conf
+      regexp: "^anonymous_enable"
+      line: "anonymous_enable={{ anonymous_enable | upper }}"
+
+  - name: Allow local users login
+    ansible.builtin.lineinfile:
+      path: /etc/vsftpd/vsftpd.conf
+      regexp: "^#?local_enable"
+      line: "local_enable={{ local_enable | upper }}"
+
+  - name: Allow uploading
+    ansible.builtin.lineinfile:
+      path: /etc/vsftpd/vsftpd.conf
+      regexp: "^#?write_enable"
+      line: "write_enable={{ write_enable | upper }}"
+
+  - name: Restart the service
+    ansible.builtin.systemd:
+      name: vsftpd
+      state: restarted
+
+  tags: setup_vsftpd
+  
+- block:
+  - name: Stop the service
+    ansible.builtin.systemd:
+      name: vsftpd
+      state: stopped
+
+  - name: Remove vsftpd 
+    ansible.builtin.yum:
+      name: vsftpd
+      state: absent
+
+  - name: Remove vsftpd config
+    ansible.builtin.file:
+      path: /etc/vsftpd  
+      state: absent
+
+  tags: drop_vsftpd

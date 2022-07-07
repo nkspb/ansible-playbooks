@@ -1,0 +1,14 @@
+---
+- hosts: centos
+  gather_facts: no
+  become: yes
+  tasks:
+    - include_role:
+        name: vsftpd
+      vars:
+        anonymous_enable: "yes"
+        local_enable: "yes"
+        write_enable: "yes"
+      tags:
+        - setup_vsftpd
+        - drop_vsftpd
