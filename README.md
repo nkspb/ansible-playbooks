@@ -6,5 +6,5 @@
 **mysql** - install MySQL server on Debian-based systems<br />
 **nginx** - install nginx on Debian-based systems, and replace default index.html<br />
 **postfix** - install postfix silently<br />
-**vsftpd** - install vsftpd server and configure default settings
+**vsftpd** - install vsftpd server and configure default settings<br />
 **dnsmasq** - install dnsmasq and configure it as a caching DNS and DHCP server
