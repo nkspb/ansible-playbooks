@@ -1,0 +1,9 @@
+---
+# defaults file for dnsmasq
+custom_domain: internal.lan
+upstream_dns:
+  - 8.8.8.8
+  - 8.8.8.4
+
+dhcp_range: 192.168.0.50,192.168.0.150,12h
+dhcp_leasefile: /var/lib/dnsmasq/dnsmasq.leases

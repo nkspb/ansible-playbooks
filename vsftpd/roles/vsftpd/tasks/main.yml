@@ -29,11 +29,7 @@
       path: /etc/vsftpd/vsftpd.conf
       regexp: "^#?write_enable"
       line: "write_enable={{ write_enable | upper }}"
-
-  - name: Restart the service
-    ansible.builtin.systemd:
-      name: vsftpd
-      state: restarted
+    notify: Restart vsftpd
 
   tags: setup_vsftpd
   
@@ -54,3 +50,4 @@
       state: absent
 
   tags: drop_vsftpd
+  

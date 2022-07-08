@@ -1,0 +1,28 @@
+# set dnsmasq processes user and group
+user=dnsmasq
+group=dnsmasq
+
+# set addresses and interface to listen on
+listen-address=127.0.0.1,{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+interface={{ hostvars[inventory_hostname]['ansible_default_ipv4']['interface'] }}
+
+# have a domain automatically added to simple names in a hosts-file.
+expand-hosts
+
+# set domain for DHCP clients
+domain={{ custom_domain }}
+
+# set upstream DNS servers for non-local domains
+{% for item in upstream_dns %}
+server={{ item }}
+{% endfor %}
+
+# force local domain to IP addresses
+address=/{{custom_domain}}/127.0.0.1
+address=/{{custom_domain}}/{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+
+dhcp-range={{ dhcp_range }}
+dhcp-leasefile={{ dhcp_leasefile }}
+dhcp-authoritative
+
+conf-dir=/etc/dnsmasq.d,.rpmnew,.rpmsave,.rpmorig

@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  gather_facts: yes
+  become: yes
+  tasks:
+    - include_role:
+        name: dnsmasq
+      vars:
+        custom_domain: "internal.lan"
+        upstream_dns:
+          - 8.8.8.8
+          - 8.8.8.4
+      tags:
+        - setup_dnsmasq
+        - drop_dnsmasq

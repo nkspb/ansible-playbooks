@@ -1,0 +1,8 @@
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+127.0.0.1 dnsmasq
+{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }} dnsmasq
+
+# Add DNS records here
+192.168.50.1 testserver1

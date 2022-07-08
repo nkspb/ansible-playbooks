@@ -1,0 +1,84 @@
+---
+# tasks file for dnsmasq
+- block:
+  - name: Install dnsmasq
+    ansible.builtin.yum:
+      name: dnsmasq
+      state: present
+      update_cache: yes
+
+  - name: Ensure service is started and enabled on boot
+    ansible.builtin.systemd:
+      name: dnsmasq
+      state: started
+      enabled: yes
+
+  - name: create config backup
+    ansible.builtin.copy:
+      src: /etc/dnsmasq.conf
+      dest: /etc/dnsmasq.conf.{{ ansible_date_time.iso8601 }}.bak
+      remote_src: yes
+
+  - name: change /etc/dnsmasq.conf
+    ansible.builtin.template:
+      src: ../templates/dnsmasq.conf.j2
+      dest: /etc/dnsmasq.conf
+      owner: root
+      group: dnsmasq
+    notify:
+      - Restart dnsmasq
+
+  - name: allow DNS service incoming connections
+    ansible.builtin.firewalld:
+      service: dns
+      state: enabled
+
+  - name: allow DHCP service incoming connections
+    ansible.builtin.firewalld:
+      service: dhcp
+      state: enabled  
+
+  - name: take /etc/hosts backup
+    ansible.builtin.copy:
+      src: /etc/hosts
+      dest: /etc/hosts.{{ ansible_date_time.iso8601 }}.bak
+      remote_src: yes
+
+  - name: configure /etc/hosts
+    ansible.builtin.template:
+      src: ../templates/hosts.j2
+      dest: /etc/hosts
+      owner: root
+      group: root
+
+  - name: take resolf.conf backup
+    ansible.builtin.copy:
+      src: /etc/resolv.conf
+      dest: /etc/resolv.conf.{{ ansible_date_time.iso8601 }}.bak
+      remote_src: yes
+
+  - name: configure resolv.conf
+    ansible.builtin.copy:
+      src: ../templates/resolv.conf
+      dest: /etc/resolv.conf
+      remote_src: no
+
+  tags: setup_dnsmasq
+
+- block:
+  - name: remove dnsmasq
+    ansible.builtin.yum:
+      name: dnsmasq
+      state: absent
+
+  - name: forbid DNS service incoming connections
+    ansible.builtin.firewalld:
+      service: dns
+      state: disabled
+
+  - name: forbid DHCP service incoming connection
+    ansible.builtin.firewalld:
+      service: dhcp
+      state: disabled
+
+  tags: drop_dnsmasq

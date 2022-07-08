@@ -1,2 +1,6 @@
 ---
 # handlers file for vsftpd
+- name: Restart vsftpd
+  ansible.builtin.systemd:
+    name: vsftpd
+    state: restarted

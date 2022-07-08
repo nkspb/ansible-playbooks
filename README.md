@@ -7,3 +7,4 @@
 **nginx** - install nginx on Debian-based systems, and replace default index.html<br />
 **postfix** - install postfix silently<br />
 **vsftpd** - install vsftpd server and configure default settings
+**dnsmasq** - install dnsmasq and configure it as a caching DNS and DHCP server
