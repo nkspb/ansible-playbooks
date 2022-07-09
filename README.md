@@ -9,3 +9,4 @@
 **vsftpd** - install vsftpd server and configure default settings<br />
 **dnsmasq** - install dnsmasq and configure it as a caching DNS and DHCP server<br />
 **nginx_php_fpm** - install a pre-configured nginx server with php-fpm<br />
+**superusers** - create superusers group with sudo access and add new users to it<br />

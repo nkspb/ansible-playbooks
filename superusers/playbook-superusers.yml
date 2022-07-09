@@ -1,0 +1,33 @@
+---
+- hosts: localhost
+  gather_facts: no
+  become: yes
+  tasks:
+
+    - name: Create group superusers
+      ansible.builtin.group:
+        name: superusers
+        state: present
+
+    - name: Enable sudo for superusers
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/superusers
+        line: "%superusers  ALL=(ALL:ALL) ALL"
+        create: yes
+        validate: /usr/sbin/visudo -cf %s
+        
+    - name: Create user2 with group superusers
+      ansible.builtin.user:
+        name: user2
+        password: $6$1KSbDYeb8qiJjN41$ycd5ytQ6J8Z2liygs6cXmkDMX3KwHWCsHXqi5fNYWIJ11gjlVyF8KFAjQEbokIXV/6A/aaU5SrR4usyCRivAz0
+        state: present
+        groups: superusers
+        append: yes
+
+    - name: Create user3 with group superusers
+      ansible.builtin.user:
+        name: user3
+        password: $6$QvXKOaVQNvcO31gO$hOhI8.T5.0HJklNOOd32M6wObnpRPyy2rNkl9YN7tUEuyTI2fj5QJchGYA6dJWzmNUSzLRgrgVo9Vixp8wPYx.
+        state: present
+        groups: superusers
+        append: yes
