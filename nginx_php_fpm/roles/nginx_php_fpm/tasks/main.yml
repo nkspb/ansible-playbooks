@@ -1,0 +1,100 @@
+---
+# tasks file for nginx
+- block:
+  - name: Install nginx
+    ansible.builtin.apt:
+      name: nginx={{ nginx_version }}
+      state: present
+      update_cache: yes
+
+  # - name: Create nginx config file
+  - name: Ensure nginx is running
+    ansible.builtin.systemd:
+      name: nginx
+      state: started
+
+  - name: Add firewall rule for http
+    ansible.builtin.ufw:
+      rule: allow
+      port: 80
+      proto: tcp
+
+  - name: Add firewall rule for https
+    ansible.builtin.ufw:
+      rule: allow
+      port: 443
+      proto: tcp
+
+  - name: Install php 
+    ansible.builtin.apt:
+      name: php={{ php_version }}
+      state: present
+
+  - name: Install php-fpm
+    ansible.builtin.apt:
+      name: php-fpm={{ php_fpm_version }}
+      state: present
+
+  - name: Copy site configuration to sites-available
+    ansible.builtin.template:
+      src: site.conf.j2
+      dest: /etc/nginx/sites-available/site.conf
+
+  - name: Create directory for site
+    ansible.builtin.file:
+      path: "{{ root }}"
+      owner: www-data
+      state: directory
+
+  - name: Copy index page to root
+    ansible.builtin.template:
+      src: index.php.j2
+      dest: "{{ root }}/index.php"
+
+  - name: Disable the default config
+    ansible.builtin.file:
+      path: /etc/nginx/sites-enabled/default
+      state: absent
+
+  - name: Enable the site
+    ansible.builtin.file:
+      src: /etc/nginx/sites-available/site.conf
+      dest: /etc/nginx/sites-enabled/site.conf
+      state: link
+    notify: Restart nginx
+
+  tags: setup
+
+- block:
+    - name: Remove nginx
+      ansible.builtin.apt:
+        pkg:
+          - nginx
+          - nginx-full
+          - nginx-common
+        purge: yes
+        state: absent
+
+    - name: Remove php and php-fpm
+      ansible.builtin.apt:
+        pkg:
+          - php
+          - php-fpm
+        purge: yes
+        autoremove: yes
+        state: absent
+
+    - name: Deny incoming connections for http
+      ansible.builtin.ufw:
+        rule: deny
+        port: 80
+        proto: tcp
+
+    - name: Deny incoming connections for https
+      ansible.builtin.ufw:
+        rule: deny
+        port: 443
+        proto: tcp
+
+  tags: drop 
+

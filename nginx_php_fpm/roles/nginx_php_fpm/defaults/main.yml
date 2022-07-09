@@ -1,0 +1,7 @@
+---
+# defaults file for nginx
+domain: internal-site.com
+root: /opt/nginx/ansible
+nginx_version: 1.18.0-6.1+deb11u2
+php_version: 2:7.4+76
+php_fpm_version: 2:7.4+76
