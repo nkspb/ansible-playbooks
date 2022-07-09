@@ -8,4 +8,4 @@
 **postfix** - install postfix silently<br />
 **vsftpd** - install vsftpd server and configure default settings<br />
 **dnsmasq** - install dnsmasq and configure it as a caching DNS and DHCP server<br />
-**nginx_php_fmp** - install a pre-configured nginx server with php-fpm<br />
+**nginx_php_fpm** - install a pre-configured nginx server with php-fpm<br />
