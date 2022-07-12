@@ -1,0 +1,246 @@
+---
+- name: Install Docker
+  hosts: app
+  gather_facts: yes
+  become: yes
+  tags: docker
+
+  tasks:
+    - block:
+      - name: Install ca-certificates, cure, gnupg, lsb-release, update repo
+        ansible.builtin.apt:
+          pkg:
+            - ca-certificates
+            - curl
+            - gnupg
+            - lsb-release
+          state: present
+          update_cache: yes
+
+      - name: Create directory to store repo GPG key in
+        ansible.builtin.file:
+          name: /etc/apt/keyrings
+          state: directory
+
+      - name: Check if the repo key already exists
+        ansible.builtin.stat:
+          path: /etc/apt/keyrings/docker.gpg
+        register: docker_pgp_exists
+
+      - name: Download and install the key if it doesn't exist
+        ansible.builtin.shell: 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg'
+        when: not docker_pgp_exists.stat.exists
+
+      - name: Get dpkg --print-arhitecture
+        ansible.builtin.shell: echo "$(dpkg --print-architecture)"
+        register: architecture
+
+      - name: Get lsb-release -cs
+        ansible.builtin.shell: echo "$(lsb_release -cs)"
+        register: lsb_release
+
+      - name: Set up the repository
+        ansible.builtin.apt_repository:
+          repo: deb [arch={{ architecture.stdout }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ lsb_release.stdout }} stable
+          filename: docker
+          state: present
+
+      - name: Install Docker components
+        ansible.builtin.apt:
+          pkg:
+            - docker-ce
+            - docker-ce-cli
+            - containerd.io
+            - docker-compose-plugin
+          state: present
+          update_cache: yes
+        notify: Ensure Docker is running
+
+      when: ansible_facts['distribution'] == 'Ubuntu'
+  
+
+    - block:
+      - name: Set up the repository
+        ansible.builtin.get_url:
+          url: https://download.docker.com/linux/centos/docker-ce.repo
+          dest: /etc/yum.repos.d/docker-ce.repo
+
+      - name: Install yum-utils
+        ansible.builtin.yum:
+          name: yum-utils
+          state: present
+          update_cache: yes
+
+      - name: Install Docker components
+        ansible.builtin.yum:
+          pkg:
+            - docker-ce
+            - docker-ce-cli
+            - containerd.io
+            - docker-compose-plugin
+          state: present
+        notify: Ensure Docker is running
+
+      when: ansible_facts['distribution'] == 'CentOS'
+      
+  handlers:
+    - name: Ensure Docker is running
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+    
+##################################
+
+- name: Install PostgreSQL
+  hosts: database
+  gather_facts: yes
+  become: yes
+  tags: psql
+
+  tasks:
+    - block:
+      - name: Install ca-certificates package
+        ansible.builtin.apt:
+          name: ca-certificates
+          state: present
+
+      - name: Add the repository key
+        ansible.builtin.apt_key:
+          url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          state: present
+
+      - name: Get lsb-release -cs
+        ansible.builtin.shell: echo "$(lsb_release -cs)"
+        register: lsb_release
+
+      - name: Set up the repository
+        ansible.builtin.apt_repository:
+          repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ lsb_release.stdout }}-pgdg main
+          filename: postgresql
+          state: present
+
+      - name: Install PostgreSQL
+        ansible.builtin.apt:
+          pkg:
+            - postgresql={{ psql_version_ubuntu }}
+            - postgresql-contrib={{ psql_version_ubuntu }}
+          state: present
+          update-cache: yes
+
+      - name: Get config file location
+        ansible.builtin.shell: sudo -i -u postgres psql -c 'SHOW config_file' | sed -n '3 p'| tr -d ' '
+        register: psql_config_file
+
+      - name: Get data location
+        ansible.builtin.shell: sudo -i -u postgres psql -c 'SHOW data_directory' | sed -n '3 p'| tr -d ' '
+        register: data_directory_location
+
+      - name: Stop PostgreSQL service
+        ansible.builtin.systemd:
+          name: postgresql
+          state: stopped
+
+      - name: Create data directory
+        ansible.builtin.file:
+          path: "{{ psql_data_directory }}"
+          state: directory
+          owner: postgres
+          group: postgres
+          mode: '750'
+
+      - name: Copy data files to new location
+        ansible.builtin.copy:
+          src: "{{ data_directory_location.stdout }}/"
+          dest: "{{ psql_data_directory }}"
+          owner: postgres
+          group: postgres
+          remote_src: yes
+
+      - name: Set data directory
+        ansible.builtin.lineinfile:
+          path: "{{ psql_config_file.stdout }}" 
+          regexp: "#?data_directory ="
+          line: "data_directory = '{{ psql_data_directory }}'"
+
+      - name: Start postgresql service
+        ansible.builtin.systemd:
+          name: postgresql
+          state: started
+
+      when: ansible_facts['distribution'] == 'Ubuntu'
+
+
+    - block:
+      - name: Disable builtin PostgreSQL module
+        ansible.builtin.command: dnf -qy module disable postgresql
+
+      - name:  Set up the repository
+        ansible.builtin.yum:
+          name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+          disable_gpg_check: yes
+          state: present
+          
+      - name: Install PostgreSQL
+        ansible.builtin.yum:
+          pkg:
+            - postgresql{{ psql_version_centos }}
+            - postgresql{{ psql_version_centos }}-server
+          state: present
+
+      - name: Get setup utility location
+        ansible.builtin.shell: "which postgresql-{{ psql_version_centos }}-setup"
+        register: psql_setup_location
+
+      - name: Initialize the database
+        ansible.builtin.shell: "{{ psql_setup_location.stdout }} initdb"
+        register: db_initialized
+        failed_when: db_initialized.rc > 1
+  
+      - name: Start the service
+        ansible.builtin.systemd:
+          name: "postgresql-{{ psql_version_centos }}"
+          state: started
+
+      - name: Get config file location
+        ansible.builtin.shell: sudo -i -u postgres psql -c 'SHOW config_file' | sed -n '3 p'| tr -d ' '
+        register: psql_config_file
+
+      - name: Get data location
+        ansible.builtin.shell: sudo -i -u postgres psql -c 'SHOW data_directory' | sed -n '3 p'| tr -d ' '
+        register: data_directory_location
+
+      - name: Stop the service
+        ansible.builtin.systemd:
+          name: "postgresql-{{ psql_version_centos }}"
+          state: stopped
+
+      - name: Create data directory
+        ansible.builtin.file:
+          path: "{{ psql_data_directory }}"
+          state: directory
+          owner: postgres
+          group: postgres
+          mode: '750'
+
+      - name: Set data directory
+        ansible.builtin.lineinfile:
+          path: "{{ psql_config_file.stdout }}" 
+          regexp: "^#?data_directory ="
+          line: "data_directory = '{{ psql_data_directory }}'"
+
+      - name: Copy data files to new location
+        ansible.builtin.copy:
+          src: "{{ data_directory_location.stdout }}/"
+          dest: "{{ psql_data_directory }}"
+          owner: postgres
+          group: postgres
+          remote_src: yes
+
+      - name: Start the service
+        ansible.builtin.systemd:
+          name: "postgresql-{{ psql_version_centos }}"
+          state: started
+
+      when: ansible_facts['distribution'] == 'CentOS'
+
+
