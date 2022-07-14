@@ -21,7 +21,7 @@
   ansible.builtin.lineinfile:
     path: /etc/php/7.4/fpm/pool.d/www.conf
     regexp: "^listen ="
-    line: "listen = {{ php_fpm_port }}""
+    line: "listen = {{ php_fpm_port }}"
   when: not rc.found
   notify: php-fpm restarted
 

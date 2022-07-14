@@ -10,4 +10,5 @@
 **dnsmasq** - install dnsmasq and configure it as a caching DNS and DHCP server<br />
 **nginx_php_fpm** - install a pre-configured nginx server with php-fpm<br />
 **superusers** - create superusers group with sudo access and add new users to it<br />
-**docker&postgresql** - install Docker and PostgreSQL (with custom data directory)
+**docker&postgresql** - install Docker and PostgreSQL (with custom data directory)<br />
+**nginx_php_fpm_users** - install nginx and php-fpm with specific fastcgi address\port, create new user with public key authentication<br />
