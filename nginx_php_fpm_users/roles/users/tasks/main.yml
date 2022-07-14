@@ -1,0 +1,12 @@
+---
+# tasks file for users
+- name: Create a user {{ user_to_create }}
+  ansible.builtin.user:
+    name: "{{ user_to_create }}"
+    state: present
+
+- name: Copy authorized key
+  ansible.posix.authorized_key:
+    user: "{{ user_to_create }}"
+    state: present
+    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"

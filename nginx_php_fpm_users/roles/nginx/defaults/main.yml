@@ -1,0 +1,3 @@
+---
+# defaults file for nginx
+php_fpm_port: 9000

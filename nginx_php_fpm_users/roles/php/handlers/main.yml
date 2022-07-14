@@ -1,0 +1,6 @@
+---
+# handlers file for php
+- name: php-fpm restarted
+  ansible.builtin.systemd:
+    name: php7.4-fpm
+    state: restarted

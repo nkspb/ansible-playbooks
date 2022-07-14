@@ -1,0 +1,43 @@
+---
+- name: Install nginx
+  hosts: localhost
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: install nginx dependencies
+      ansible.builtin.apt: 
+        pkg:
+        - curl
+        - gnupg2
+        - ca-certificates
+        - lsb-release
+        update_cache: yes
+        state: present
+
+    - name: install nginx
+      ansible.builtin.apt: 
+        name: nginx
+        state: latest
+        update_cache: yes
+
+    - name: set nginx to pass php to remote host on tcp 9000
+      ansible.builtin.blockinfile:
+        path: /etc/nginx/sites-available/default
+        block: |
+          location ~ .php$ {
+            include /etc/nginx/fastcgi_params;
+            fastcgi_pass {{php_fpm_ip}}:9000;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+          }
+        insertafter: "^server {"
+      notify: nginx restarted
+
+    - name: Set test php page
+      ansible.builtin.shell: echo "<?php phpinfo(); ?>" > /usr/share/nginx/html/test.php
+
+  handlers:
+      - name: nginx restarted
+        ansible.builtin.systemd:
+          name: nginx
+          state: started

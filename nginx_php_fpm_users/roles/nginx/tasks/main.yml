@@ -1,0 +1,23 @@
+---
+# tasks file for nginx
+- name: install nginx dependencies
+  ansible.builtin.apt: 
+    pkg:
+    - curl
+    - gnupg2
+    - ca-certificates
+    - lsb-release
+    update_cache: yes
+    state: present
+
+- name: install nginx
+  ansible.builtin.apt: 
+    name: nginx
+    state: latest
+    update_cache: yes
+
+- name: update config file to connect to fastcgi via port 9000
+  ansible.builtin.template:
+    src: templates/default.j2
+    dest: /etc/nginx/sites-available/default
+  notify: nginx restarted

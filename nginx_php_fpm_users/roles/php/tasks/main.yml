@@ -1,0 +1,29 @@
+---
+# tasks file for php
+- name: install php and php-fpm
+  ansible.builtin.apt:
+    pkg:
+      - php=2:7.4+75
+      - php-fpm=2:7.4+75
+    state: present
+    update_cache: yes
+
+- name: Check if php-fpm is configured to listen on TCP 9000
+  ansible.builtin.lineinfile:
+    path: /etc/php/7.4/fpm/pool.d/www.conf
+    regexp: "^listen = {{ php_fpm_port }}"
+    state: absent
+  check_mode: yes
+  changed_when: false
+  register: rc
+
+- name: Set php-fpm to listen on TCP 9000
+  ansible.builtin.lineinfile:
+    path: /etc/php/7.4/fpm/pool.d/www.conf
+    regexp: "^listen ="
+    line: "listen = {{ php_fpm_port }}""
+  when: not rc.found
+  notify: php-fpm restarted
+
+- name: Create test php page
+  ansible.builtin.shell: echo '<?php phpinfo(); ?>' >> /var/www/html/test.php

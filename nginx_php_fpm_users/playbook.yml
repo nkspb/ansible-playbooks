@@ -1,0 +1,16 @@
+---
+- hosts: nginx
+  become:  true
+  gather_facts: no
+
+  roles:
+    - { role: nginx, php_fpm_ip: 51.250.84.59, php_fpm_port: 9000 }
+    - {role: users, user_to_create: user1 }
+
+- hosts: php
+  become: true
+  gather_facts: no
+
+  roles:
+    - php
+    - {role: users, user_to_create: user1 }
