@@ -4,7 +4,7 @@
   gather_facts: no
 
   roles:
-    - { role: nginx, php_fpm_ip: 51.250.92.58, php_fpm_port: 9000 }
+    - { role: http, php_fpm_ip: 51.250.92.58, php_fpm_port: 9000 }
     - { role: users, user_to_create: user1 }
 
 - hosts: php

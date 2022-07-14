@@ -15,4 +15,4 @@ Example Playbook
 ---
 - hosts: servers
   roles:
-    - { role: nginx, php_fpm_ip: 51.250.84.59, php_fpm_port: 9000 }
+    - { role: http, php_fpm_ip: 51.250.84.59, php_fpm_port: 9000 }
